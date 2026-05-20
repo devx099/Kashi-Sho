@@ -1,16 +1,19 @@
-console.log("V0.1 HUD Injected");
-
-let hud = document.getElementById("yt-caption-hud");
+// Create HUD
+let hud = document.getElementById("yt-lyrics-hud");
 
 if (!hud) {
   hud = document.createElement("div");
-  hud.id = "yt-caption-hud";
-  hud.innerText = "Waiting for captions...";
+  hud.id = "yt-lyrics-hud";
+  hud.innerText = "Waiting for music...";
   document.body.appendChild(hud);
 }
 
+// Listen for lyric broadcasts
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "LIVE_CAPTION") {
-    hud.innerText = message.text;
+  if (message.type === "DISPLAY_LYRICS") {
+    hud.style.display = "block";
+
+    // Format lyrics
+    hud.innerHTML = message.lyrics.replace(/\n/g, "<br>");
   }
 });

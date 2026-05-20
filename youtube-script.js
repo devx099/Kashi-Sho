@@ -1,20 +1,23 @@
-console.log("V0.1 Caption Extractor Active");
+// Function to grab the video title
+function checkSong() {
+  const videoTitleElement =
+    document.querySelector("#above-the-fold #title h1 yt-formatted-string");
 
-function extractCaptions() {
-  const captionWindow =
-    document.querySelector(".ytp-caption-window-container");
+  if (videoTitleElement && videoTitleElement.innerText) {
+    const songTitle = videoTitleElement.innerText;
 
-  if (!captionWindow) return;
+    // Clean up the title
+    const cleanTitle = songTitle
+      .replace(/\[.*?\]|\(.*?\)/g, "")
+      .trim();
 
-  const captionText = captionWindow.innerText.trim();
-
-  if (captionText) {
+    // Send title to background
     chrome.runtime.sendMessage({
-      type: "LIVE_CAPTION",
-      text: captionText
+      type: "NEW_SONG",
+      title: cleanTitle
     });
   }
 }
 
-// Poll repeatedly for caption changes
-setInterval(extractCaptions, 200);
+// YouTube uses SPA navigation
+setInterval(checkSong, 5000);
