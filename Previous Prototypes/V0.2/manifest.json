@@ -1,16 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Global YouTube Lyrics HUD",
-  "version": "0.3",
-  "description": "Persistent synchronized caption HUD.",
-  "permissions": [
-    "tabs",
-    "webRequest"
-  ],
-  "host_permissions": [
-    "https://*.youtube.com/*",
-    "https://youtube.com/*"
-  ],
+  "version": "0.2",
+  "description": "Displays YouTube music lyrics in a persistent HUD across all tabs.",
+  "permissions": ["tabs"],
   "background": {
     "service_worker": "background.js"
   },

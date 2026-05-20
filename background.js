@@ -1,37 +1,40 @@
+console.log("MONKEY DEBUG: Background Worker Active");
+
+let youtubeTabId = null;
+
+// Catch YouTube caption network requests
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    if (details.url.includes("youtube.com/api/timedtext")) {
+      console.log("MONKEY DEBUG: Background caught caption URL!");
+
+      if (details.tabId) {
+        youtubeTabId = details.tabId;
+
+        chrome.tabs.sendMessage(details.tabId, {
+          type: "FOUND_CAPTION_URL",
+          url: details.url
+        }).catch(() => {});
+      }
+    }
+  },
+  { urls: ["https://*.youtube.com/api/timedtext*"] }
+);
+
+// Relay synchronized lines globally
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "NEW_SONG") {
-    fetchLyrics(message.title);
+  if (message.type === "SYNC_LINE") {
+
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+
+        chrome.tabs.sendMessage(tab.id, {
+          type: "UPDATE_HUD",
+          text: message.text
+        }).catch(() => {});
+
+      });
+    });
+
   }
 });
-
-async function fetchLyrics(title) {
-  try {
-    // Free lyrics API
-    const response = await fetch(
-      `https://lrclib.net/api/search?q=${encodeURIComponent(title)}`
-    );
-
-    const data = await response.json();
-
-    if (data && data.length > 0) {
-      const lyrics =
-        data[0].syncedLyrics ||
-        data[0].plainLyrics ||
-        "No lyrics found.";
-
-      // Broadcast to ALL tabs
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach((tab) => {
-          chrome.tabs.sendMessage(tab.id, {
-            type: "DISPLAY_LYRICS",
-            lyrics: lyrics
-          }).catch(() => {
-            // Ignore unsupported pages
-          });
-        });
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching lyrics:", error);
-  }
-}
