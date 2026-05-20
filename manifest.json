@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Kashi-Sho",
+  "version": "2.0.0",
+  "description": "Universal System-Wide Lyrics Engine",
+  "permissions": ["tabs"],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["kashi-brain.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["kashi-hud.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
