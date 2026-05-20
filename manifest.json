@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Global YouTube Lyrics HUD",
+  "version": "0.1",
+  "description": "Direct caption extraction prototype.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["youtube-script.js"]
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["hud-script.js"],
+      "css": ["hud-style.css"]
+    }
+  ]
+}
