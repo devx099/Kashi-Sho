@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "XenoGarden Local Caption Engine",
+  "version": "1.0",
+  "description": "Unified Offline Pyodide Extraction.",
+  "permissions": [],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": [
+        "pyodide/pyodide.js", 
+        "xeno-engine.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pyodide/*"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ]
+}
