@@ -1,86 +1,120 @@
-console.log("MONKEY DEBUG: YouTube Script Active");
+console.log("MONKEY DEBUG: Pure DOM Extractor Booted!");
 
-let captions = [];
-let lastSentText = "INITIAL_FLAG";
+async function grabCaptions() {
 
-// Listen for intercepted caption URLs
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "FOUND_CAPTION_URL") {
+  console.log(
+    "MONKEY DEBUG: Scanning DOM for hidden player data..."
+  );
 
+  // Search page scripts
+  const scripts = Array.from(
+    document.getElementsByTagName('script')
+  );
+
+  const targetScript = scripts.find(
+    s => s.textContent.includes(
+      'var ytInitialPlayerResponse = '
+    )
+  );
+
+  if (!targetScript) {
     console.log(
-      "MONKEY DEBUG: YouTube script received URL. Fetching timeline map..."
+      "MONKEY DEBUG: Could not find ytInitialPlayerResponse."
     );
-
-    fetchAndParseCaptions(message.url);
+    return;
   }
-});
 
-async function fetchAndParseCaptions(url) {
   try {
 
-    const response = await fetch(url);
-    const xmlText = await response.text();
+    // Extract player JSON
+    const rawString =
+      targetScript.textContent
+        .split('var ytInitialPlayerResponse = ')[1]
+        .split('};')[0] + '}';
 
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const playerResponse = JSON.parse(rawString);
 
-    const textElements = xmlDoc.getElementsByTagName("text");
+    // Navigate internal caption structures
+    const captionTracks =
+      playerResponse?.captions
+        ?.playerCaptionsTracklistRenderer
+        ?.captionTracks;
 
-    captions = Array.from(textElements).map((el) => ({
-      start: parseFloat(el.getAttribute("start")),
-      dur: parseFloat(el.getAttribute("dur") || "0"),
-      text: el.textContent
-        .replace(/&amp;/g, "&")
-        .replace(/&quot;/g, '"')
-        .trim()
-    }));
+    if (!captionTracks || captionTracks.length === 0) {
+
+      console.log(
+        "MONKEY DEBUG: No captions found."
+      );
+
+      return;
+    }
+
+    // Build JSON3 endpoint
+    const rawUrl = captionTracks[0].baseUrl;
+
+    const json3Url =
+      rawUrl +
+      (rawUrl.includes('?') ? '&' : '?') +
+      'fmt=json3';
 
     console.log(
-      `MONKEY DEBUG: Successfully loaded ${captions.length} lines.`
+      "MONKEY DEBUG: Target acquired. Fetching JSON3..."
     );
 
-    setupHardwareClock();
+    // Fetch caption payload
+    const res = await fetch(json3Url);
+    const data = await res.json();
+
+    console.log("================ RAW JSON3 ================");
+    console.dir(data);
+
+    console.log("================ PARSED LYRICS ================");
+
+    let count = 0;
+
+    if (data.events) {
+
+      data.events.forEach(e => {
+
+        if (e.segs) {
+
+          const text =
+            e.segs
+              .map(s => s.utf8)
+              .join('')
+              .replace(/\n/g, ' ')
+              .trim();
+
+          if (text) {
+
+            console.log(
+              `[Time: ${(e.tStartMs / 1000).toFixed(1)}s] ${text}`
+            );
+
+            count++;
+          }
+        }
+      });
+    }
+
+    console.log(
+      `================ DUMP END: ${count} LINES ================`
+    );
+
+    clearInterval(grabInterval);
 
   } catch (err) {
-    console.error("MONKEY DEBUG: Parsing error:", err);
+
+    console.error(
+      "MONKEY DEBUG: Extraction error:",
+      err
+    );
+
   }
 }
 
-function setupHardwareClock() {
+// Initial attempt
+grabCaptions();
 
-  const video = document.querySelector("video");
-  if (!video) return;
-
-  // Native hardware-backed timing loop
-  video.addEventListener("timeupdate", () => {
-
-    if (captions.length === 0) return;
-
-    const currentTime = video.currentTime;
-
-    const currentLine = captions.find(
-      (line) =>
-        currentTime >= line.start &&
-        currentTime <= (line.start + line.dur + 0.3)
-    );
-
-    const currentText = currentLine
-      ? currentLine.text
-      : "";
-
-    if (currentText !== lastSentText) {
-
-      lastSentText = currentText;
-
-      console.log(
-        "MONKEY DEBUG: Broadcasting sync line ->",
-        currentText
-      );
-
-      chrome.runtime.sendMessage({
-        type: "SYNC_LINE",
-        text: currentText
-      });
-    }
-  });
-}
+// Retry loop
+let grabInterval = setInterval(grabCaptions, 2000);

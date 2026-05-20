@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Global YouTube Lyrics HUD",
-  "version": "0.4",
-  "description": "Internal player-state caption extraction experiments.",
+  "version": "0.3",
+  "description": "Persistent synchronized caption HUD.",
   "permissions": [
     "tabs",
     "webRequest"
