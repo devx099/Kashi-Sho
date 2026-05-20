@@ -1,17 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Global YouTube Lyrics HUD",
-  "version": "0.5",
-  "description": "Distributed synchronized lyric HUD.",
+  "version": "0.4",
+  "description": "Internal player-state caption extraction experiments.",
   "permissions": [
     "tabs",
-    "storage",
-    "activeTab",
-    "scripting"
+    "webRequest"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "https://*.youtube.com/*"
+    "https://*.youtube.com/*",
+    "https://youtube.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -19,16 +17,17 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.youtube.com/*"
+        "https://*.youtube.com/*",
+        "https://youtube.com/*"
       ],
       "js": ["youtube-script.js"],
-      "run_at": "document_idle"
+      "run_at": "document_end"
     },
     {
       "matches": ["<all_urls>"],
       "js": ["hud-script.js"],
       "css": ["hud-style.css"],
-      "run_at": "document_idle"
+      "run_at": "document_end"
     }
   ]
 }
